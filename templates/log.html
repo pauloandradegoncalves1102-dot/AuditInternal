@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Log de Operações</h2>
+<div class="card">
+    <table>
+        <tr><th>Timestamp</th><th>Operação</th><th>Entidade</th><th>Detalhe</th></tr>
+        {% for l in logs %}
+        <tr>
+            <td style="white-space:nowrap;">{{ l['timestamp'] }}</td>
+            <td><strong>{{ l['operacao'] }}</strong></td>
+            <td>{{ l['entidade'] }}</td>
+            <td>{{ l['detalhe'] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="text-align:center;color:var(--muted);">Log vazio.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}   

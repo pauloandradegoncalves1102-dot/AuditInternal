@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Dashboard</h2>
+<div class="stats-grid">
+    <div class="stat-card"><div class="num">{{ stats.auditorias }}</div><div class="label">Total Auditorias</div></div>
+    <div class="stat-card success"><div class="num">{{ stats.auditorias_ativas }}</div><div class="label">Ativas</div></div>
+    <div class="stat-card danger"><div class="num">{{ stats.ncs_maior }}</div><div class="label">NCs Maiores</div></div>
+    <div class="stat-card warning"><div class="num">{{ stats.ncs }}</div><div class="label">Total NCs</div></div>
+    <div class="stat-card"><div class="num">{{ stats.planos_abertos }}</div><div class="label">Planos Abertos</div></div>
+</div>
+
+<div class="card">
+    <h3>Auditorias Recentes</h3>
+    <table>
+        <tr><th>Código</th><th>Título</th><th>Auditor</th><th>Status</th><th></th></tr>
+        {% for a in recentes %}
+        <tr>
+            <td><strong>{{ a['codigo'] }}</strong></td>
+            <td>{{ a['titulo'] }}</td>
+            <td>{{ a['auditor'] }}</td>
+            <td><span class="badge {% if a['status'] == 'Concluída' %}badge-green{% else %}badge-blue{% endif %}">{{ a['status'] }}</span></td>
+            <td><a class="btn btn-sm btn-primary" href="{{ url_for('detalhe_auditoria', aid=a['id']) }}">Abrir</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:32px;">Nenhuma auditoria registrada.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}   

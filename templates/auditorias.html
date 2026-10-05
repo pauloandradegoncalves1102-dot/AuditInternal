@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Auditorias</h2>
+<div class="card">
+    <table>
+        <tr><th>ID</th><th>Código</th><th>Título</th><th>Escopo</th><th>Auditor</th><th>Período</th><th>Status</th><th></th></tr>
+        {% for a in auditorias %}
+        <tr>
+            <td>{{ a['id'] }}</td>
+            <td><strong>{{ a['codigo'] }}</strong></td>
+            <td>{{ a['titulo'] }}</td>
+            <td>{{ a['escopo'] }}</td>
+            <td>{{ a['auditor'] }}</td>
+            <td>{{ a['data_inicio'] }} → {{ a['data_fim'] }}</td>
+            <td><span class="badge {% if a['status'] == 'Concluída' %}badge-green{% else %}badge-blue{% endif %}">{{ a['status'] }}</span></td>
+            <td><a class="btn btn-sm btn-primary" href="{{ url_for('detalhe_auditoria', aid=a['id']) }}">Detalhes</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px;">Nenhuma auditoria registrada.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}   

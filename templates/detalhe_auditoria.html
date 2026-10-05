@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ aud['codigo'] }} — {{ aud['titulo'] }}</h2>
+
+<div class="card">
+    <div class="form-row">
+        <div><strong>Escopo:</strong> {{ aud['escopo'] }}</div>
+        <div><strong>Auditor:</strong> {{ aud['auditor'] }}</div>
+    </div>
+    <div class="form-row">
+        <div><strong>Período:</strong> {{ aud['data_inicio'] }} → {{ aud['data_fim'] }}</div>
+        <div><strong>Status:</strong> <span class="badge {% if aud['status'] == 'Concluída' %}badge-green{% else %}badge-blue{% endif %}">{{ aud['status'] }}</span></div>
+    </div>
+    {% if aud['resumo'] %}<p style="margin-top:12px;"><strong>Resumo:</strong> {{ aud['resumo'] }}</p>{% endif %}
+    {% if aud['conclusao'] %}<p><strong>Conclusão:</strong> {{ aud['conclusao'] }}</p>{% endif %}
+</div>
+
+<div class="card">
+    <h3>Critérios ({{ criterios|length }})</h3>
+    <table>
+        <tr><th>ID</th><th>Descrição</th><th>Fonte</th></tr>
+        {% for c in criterios %}
+        <tr><td>{{ c['id'] }}</td><td>{{ c['descricao'] }}</td><td>{{ c['fonte'] }}</td></tr>
+        {% endfor %}
+    </table>
+    <form method="POST" action="{{ url_for('add_criterio', aid=aud['id']) }}" style="margin-top:16px;" class="inline-form">
+        <div class="form-group"><label>Descrição</label><input type="text" name="descricao" required></div>
+        <div class="form-group"><label>Fonte</label><input type="text" name="fonte" required></div>
+        <button type="submit" class="btn btn-primary btn-sm">Adicionar</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Checklist ({{ itens|length }})</h3>
+    <table>
+        <tr><th>ID</th><th>Pergunta</th><th>Resultado</th><th>Evidência</th><th></th></tr>
+        {% for it in itens %}
+        <tr>
+            <td>{{ it['id'] }}</td>
+            <td>{{ it['pergunta'] }}</td>
+            <td>
+                {% if it['resultado'] == 'Conforme' %}<span class="badge badge-green">Conforme</span>
+                {% elif it['resultado'] == 'NC' %}<span class="badge badge-red">NC</span>
+                {% elif it['resultado'] == 'Oportunidade' %}<span class="badge badge-yellow">Oportunidade</span>
+                {% else %}<span class="badge badge-gray">Pendente</span>{% endif %}
+            </td>
+            <td>{{ it['evidencia'] or '—' }}</td>
+            <td>
+                {% if not it['resultado'] %}
+                <form method="POST" action="{{ url_for('registrar_resultado', iid=it['id']) }}" class="inline-form">
+                    <div class="form-group">
+                        <select name="resultado">
+                            <option value="Conforme">Conforme</option>
+                            <option value="NC">NC</option>
+                            <option value="Oportunidade">Oportunidade</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><input type="text" name="evidencia" placeholder="Evidência"></div>
+                    <button type="submit" class="btn btn-sm btn-primary">OK</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:var(--muted);">Nenhum item no checklist.</td></tr>
+        {% endfor %}
+    </table>
+    {% if criterios %}
+    <form method="POST" action="{{ url_for('add_item', aid=aud['id']) }}" style="margin-top:16px;" class="inline-form">
+        <div class="form-group">
+            <label>Critério</label>
+            <select name="criterio_id">
+                {% for c in criterios %}<option value="{{ c['id'] }}">{{ c['descricao'] }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group"><label>Pergunta</label><input type="text" name="pergunta" required></div>
+        <button type="submit" class="btn btn-primary btn-sm">Adicionar</button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Não Conformidades ({{ ncs|length }})</h3>
+    <table>
+        <tr><th>ID</th><th>Severidade</th><th>Descrição</th><th>Causa Raiz</th><th>Impacto</th><th></th></tr>
+        {% for nc in ncs %}
+        <tr>
+            <td>NC-{{ nc['id'] }}</td>
+            <td><span class="badge {% if nc['severidade']=='Maior' %}badge-red{% elif nc['severidade']=='Menor' %}badge-yellow{% else %}badge-gray{% endif %}">{{ nc['severidade'] }}</span></td>
+            <td>{{ nc['descricao'] }}</td>
+            <td>{{ nc['causa_raiz'] or '—' }}</td>
+            <td>{{ nc['impacto'] or '—' }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('classificar_nc', ncid=nc['id']) }}" class="inline-form">
+                    <div class="form-group">
+                        <select name="severidade">
+                            <option value="Maior">Maior</option>
+                            <option value="Menor">Menor</option>
+                            <option value="Observação">Obs.</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><input type="text" name="causa_raiz" placeholder="Causa raiz"></div>
+                    <div class="form-group"><input type="text" name="impacto" placeholder="Impacto" required></div>
+                    <button type="submit" class="btn btn-sm btn-primary">Classificar</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);">Nenhuma NC registrada.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div class="card">
+    <h3>Planos de Ação ({{ planos|length }})</h3>
+    <table>
+        <tr><th>ID</th><th>NC</th><th>Ação</th><th>Responsável</th><th>Prazo</th><th>Status</th><th></th></tr>
+        {% for p in planos %}
+        <tr>
+            <td>PA-{{ p['id'] }}</td>
+            <td>NC-{{ p['nc_id'] }}</td>
+            <td>{{ p['acao'] }}</td>
+            <td>{{ p['responsavel'] }}</td>
+            <td>{{ p['prazo'] }}</td>
+            <td><span class="badge {% if p['status']=='Verificado' %}badge-green{% elif p['status']=='Concluído' %}badge-blue{% elif p['status']=='Em andamento' %}badge-yellow{% else %}badge-gray{% endif %}">{{ p['status'] }}</span></td>
+            <td>
+                <form method="POST" action="{{ url_for('atualizar_plano', pid=p['id']) }}" class="inline-form">
+                    <div class="form-group">
+                        <select name="status">
+                            <option value="Aberto">Aberto</option>
+                            <option value="Em andamento">Em andamento</option>
+                            <option value="Concluído">Concluído</option>
+                            <option value="Verificado">Verificado</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><input type="text" name="verificacao" placeholder="Verificação"></div>
+                    <button type="submit" class="btn btn-sm btn-primary">Atualizar</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;color:var(--muted);">Nenhum plano de ação.</td></tr>
+        {% endfor %}
+    </table>
+    {% if ncs %}
+    <form method="POST" action="{{ url_for('criar_plano') }}" style="margin-top:16px;" class="inline-form">
+        <input type="hidden" name="auditoria_id" value="{{ aud['id'] }}">
+        <div class="form-group">
+            <label>NC</label>
+            <select name="nc_id">
+                {% for nc in ncs %}<option value="{{ nc['id'] }}">NC-{{ nc['id'] }} ({{ nc['severidade'] }})</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group"><label>Ação corretiva</label><input type="text" name="acao" required></div>
+        <div class="form-group"><label>Responsável</label><input type="text" name="responsavel" required></div>
+        <div class="form-group"><label>Prazo</label><input type="date" name="prazo" required></div>
+        <button type="submit" class="btn btn-primary btn-sm">Criar</button>
+    </form>
+    {% endif %}
+</div>
+
+{% if aud['status'] != 'Concluída' %}
+<div class="card" style="border-left: 4px solid var(--success);">
+    <h3>Finalizar Auditoria</h3>
+    <form method="POST" action="{{ url_for('finalizar', aid=aud['id']) }}">
+        <div class="form-group"><label>Resumo Executivo</label><textarea name="resumo" rows="3" required></textarea></div>
+        <div class="form-group"><label>Conclusão</label><textarea name="conclusao" rows="2" required></textarea></div>
+        <button type="submit" class="btn btn-success">Finalizar Auditoria</button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}   
